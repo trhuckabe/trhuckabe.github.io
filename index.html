@@ -416,13 +416,13 @@ function avgLine()
 
                 count += 1;
 
-                if(i != 0 && (Date.parse(data[i-1].Year) != Date.parse(d.Year)))
+                if(i != 0 && (+Date.parse(data[i-1].Year) != +Date.parse(d.Year)))
                 {
                     avg = avg_sum / count;
                     count = 0;
                     avg_sum = 0;
                     avgArr.push({"Year": data[i-1].Year, "Data Value": avg});
-                    //console.log(avgArr[avgArr.length - 1]);
+                    console.log(avgArr[avgArr.length - 1]);
                 }
             }
         })
