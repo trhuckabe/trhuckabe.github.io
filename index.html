@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style> /* set the CSS */
+
+body { font: 12px Arial;}
+
+path { 
+    stroke: steelblue;
+    stroke-width: 2;
+    fill: none;
+}
+
+.selected {
+    fill: red;
+}
+.unselected {
+    fill: rgb(213,222,217);
+}
+.mousedOn {
+    fill: orange;
+}
+
+path:hover {
+    fill-opacity: .7;
+}
+div.tooltip {   
+    position: absolute;           
+    text-align: center;           
+    width: 60px;                  
+    height: 28px;                 
+    padding: 2px;             
+    font: 12px sans-serif;        
+    background: white;   
+    border: 0px;      
+    border-radius: 8px;           
+    pointer-events: none;         
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: grey;
+    stroke-width: 2;
+    shape-rendering: crispEdges;
+}
+  #usMap {
+    height: 400px;
+    width: 40%;
+    float: right;
+    border-style: solid;
+    border-color: #FFF;
+        overflow-y: scroll;
+    overflow-x: scroll;
+  }
+  #OdChar
+  {
+    height: 800px;
+    width: 80%;
+    float:center;
+    border-style: solid;
+    border-color: #CCC;
+    overflow-y: scroll;
+    overflow-x: scroll;
+  }
+  #checkboxes
+  {
+    height: 250px;
+    width: 20%;
+    float: right;
+    border-style: solid;
+    border-color: #FFF;
+    overflow-y: scroll;
+    overflow-x: scroll;
+  }
+  #graphHolder
+    {
+    height: 550px;
+    width: 55%;
+    float: left;
+    border-style: solid;
+    border-color: #FFF;
+    overflow-y: scroll;
+    overflow-x: scroll;
+  }
+
+</style> 
+  <!--  <select id="ddlViewBy">
+  <option value="VA">VA</option>
+  <option value="TX" >TX</option>
+  <option value="WI">WI</option>
+  <input type="button" name="Submit" onclick="updateGraph()" value="Submit">
+</select>-->
+<div id=graphHolder>
+    <div id="OdChart">
+    </div>
+</div>
+<div id="checkboxes">
+    <form id="stateCheckBox">
+        <input type="checkbox" id="avgbox" onclick="avgLine()"><label> avg</label>
+    </form>
+    <select id="indicatorForm">
+    </select>
+</div>
+<div id="startTime">
+        <select id="month1"></select>
+        <select id="year1"></select>
+    </div>
+    <div id="endTime">
+        <select id="month2"></select>
+        <select id="year2"></select>
+     </div>
+     <div>
+         <input type="submit" value="Submit" onclick="updateTime()">
+     </div>
+<div id="usMap">
+  <svg></svg>
+</div>
+<!-- load the d3.js library -->    
+<script src=""https://d3js.org/d3.v5.min.js""></script>
+
+<script>
+
+var stateList = [
+    "AK","AL","AR","AZ","CA","CO","CT","DC","DE","FL",
+    "GA","HI","IA","ID", "IL","IN","KS","KY","LA","MA",
+    "MD","ME","MI","MN", "MO","MS","MT","NC","ND","NE",
+    "NH","NJ","NM","NV","NY", "OH","OK","OR","PA","RI",
+    "SC","SD","TN","TX","UT","VA","VT","WA","WI","WV",
+    "WY"
+];
+
+var stateNames = [
+    'Alaska','Alabama','Arkansas','Arizona', 'California','Colorado','Connecticut','District_of_Columbia','Delaware','Florida',
+    'Georgia','Hawaii','Iowa','Idaho','Illinois','Indiana','Kansas','Kentucky','Louisiana','Massachusetts',
+    'Maryland','Maine','Michigan','Minnesota','Missouri','Mississippi','Montana','North_Carolina','North_Dakota','Nebraska','New_Hampshire',
+    'New_Jersey','New_Mexico','Nevada','New_York','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode_Island','South_Carolina','South_Dakota',
+    'Tennessee','Texas','Utah','Virginia','Vermont','Washington','Wisconsin','West_Virginia','Wyoming'
+    ];
+
+var indicatorsLabel = [
+    "Number of Drug Overdose Deaths",
+    "Cocaine",
+    "Heroin", 
+    "Methadone",
+    "Natural & semi-synthetic opioids",
+    "Opioids",
+    "Psychostimulants", 
+    "Synthetic opioids, excl. methadone"
+];
+
+var indicatorValue = [
+    "Number of Drug Overdose Deaths",
+    "Cocaine (T40.5)",
+    "Heroin (T40.1)",
+    "Methadone (T40.3)",
+    "Natural & semi-synthetic opioids (T40.2)",
+    "Opioids (T40.0-T40.4,T40.6)",
+    "Psychostimulants with abuse potential (T43.6)",
+    "Synthetic opioids, excl. methadone (T40.4)"
+];
+
+var monthList = [
+    "January", "February","March","April","May",
+    "June", "July", "August", "September",
+    "October", "November", "December"
+    ];
+
+var yearList = [
+    "2015", "2016", "2017", "2018"
+    ];
+
+const width = 600, height = 400,
+    margin = {top: 20, right: 20, bottom: 80, left: 80},
+    contentWidth = width - margin.left - margin.right,
+    contentHeight = height - margin.top - margin.bottom;
+    // Add check boxes
+    stateList.forEach( function(d, i){
+    if(i%6 == 0)
+    {
+        document.getElementById('stateCheckBox').innerHTML += '<br/>';
+    }
+    document.getElementById('stateCheckBox').innerHTML +=  ('<input type="checkbox"id="' +d+ 'box" value= "'+ d + 
+        '"" onclick="updateGraph(this.value)"><label>'+ d + '</label>');
+
+   } );
+
+  
+    indicatorsLabel.forEach( function(d,i){
+    document.getElementById('indicatorForm').innerHTML +=
+     ('<option value="' +indicatorValue[i]+ '" onclick="updateIndicator(this.value)"><label>'+ d + '</label>');
+
+   } );
+
+
+    monthList.forEach( function(d,i){
+    document.getElementById('month1').innerHTML += 
+     ('<option value="' +d+ '" <label>'+ d + '</label>');
+
+   } );
+        yearList.forEach( function(d,i){
+    document.getElementById('year1').innerHTML += 
+     ('<option value="' +d+ '"<label>'+ d + '</label>');
+
+   } );
+    monthList.forEach( function(d,i){
+    document.getElementById('month2').innerHTML += 
+     ('<option value="' +d+ '"<label>'+ d + '</label>');
+
+   } );
+        yearList.forEach( function(d,i){
+    document.getElementById('year2').innerHTML += 
+     ('<option value="' +d+ '"<label>'+ d + '</label>');
+
+   } );
+
+function updateTime()
+{
+    var monthStart = document.getElementById("month1").value;
+    var yearStart = document.getElementById("year1").value;
+    var monthEnd = document.getElementById("month2").value;
+    var yearEnd = document.getElementById("year2").value;
+
+    var month1Index = 0;
+    var month2Index = 0;
+    var year1Index = 0;
+    var year2Index = 0;
+
+    monthList.forEach( function(d,i){
+        if(monthStart == d)
+        {
+            month1Index = i;
+        }
+        if(monthEnd == d)
+        {
+            month2Index = i;
+        }
+    });
+
+        yearList.forEach( function(d,i){
+        if(yearStart == d)
+        {
+            year1Index = i;
+        }
+        if(yearEnd == d)
+        {
+            year2Index = i;
+        }
+    });
+
+    if(((yearEnd == "2018") && (month2Index >= 6))
+        || (year1Index > year2Index)
+        || ((year1Index == year2Index) && (month1Index >= (month2Index))))
+    {
+        alert("Invalid Date \n Note: Data does not go past June 2018");
+    }
+    else
+    {
+
+    d3.select("#xaxis").remove();
+    d3.select("#yaxis").remove();
+        mainStartDate = parseDate(yearStart.concat(",", monthStart));
+        mainEndDate = parseDate(yearEnd.concat(",", monthEnd));
+        createGraph(mainIndicator);
+
+    stateList.forEach(function(d){
+        checked = document.getElementById(d+"box").checked;
+        if (checked == true) {
+         removeLine(d);
+         updateGraph(d);
+        }
+    });
+    var checked = document.getElementById("avgbox").checked;
+        if (checked == true) {
+        removeLine("avg");
+        avgLine();
+        }
+    }
+}
+function removeLine(state)
+{
+    if(state != "avg")
+    {
+            var index = -1;
+            stateList.forEach(function(d,i)
+            {
+                if(d == state)
+                {
+                    index = i;
+                }
+            });
+        var stateName = stateNames[index];
+       // console.log(stateName);
+       var stateshape = d3.select("#" + stateName);
+       stateshape.classed("selected", false);
+       stateshape.classed("mousedOn", false);
+       stateshape.classed("mousedOn", false);
+       stateshape.classed("unselected", true);
+   }
+    d3.select("#"+state).remove();
+}
+function updateGraph(state){
+    promiseData.then(function(data){
+        var checked = document.getElementById(state+"box").checked;
+        indicator = document.getElementById("indicatorForm").value;
+        var indicatorLabel = indicator;
+    if (checked != true) {
+     removeLine(state);
+    }
+    else {
+            var index = -1;
+            stateList.forEach(function(d,i)
+            {
+                if(d == state)
+                {
+                    index = i;
+                }
+            });
+        var stateName = stateNames[index];
+       // console.log(stateName);
+       var stateshape = d3.select("#" + stateName);
+       stateshape.classed("mousedOn", false);
+
+       stateshape.classed("unselected", false);
+       stateshape.classed("selected", true);
+       //;
+       // document.getElementById(stateNames).classed("unselected",false);
+
+          data = data.filter(function(d){ return (d.Indicator == indicator);})
+           
+        .filter(function(d){return (d.State == state);}
+                );
+        if(data.length == 0)
+        {
+            indicatorValue.forEach(function(d, i){
+                if(d == indicator)
+                {
+                    indicatorLabel = indicatorsLabel[i];
+                }
+            });
+           document.getElementById(state+"box").checked = false;
+                       var index = -1;
+            stateList.forEach(function(d,i)
+            {
+                if(d == state)
+                {
+                    index = i;
+                }
+            });
+        var stateName = stateNames[index];
+       // console.log(stateName);
+       var stateshape = d3.select("#" + stateName);
+       stateshape.classed("mousedOn", false);
+       stateshape.classed("selected", false);
+       stateshape.classed("unselected", true);
+           alert(indicatorLabel + " information for " + stateName +" ("+state+") is not avalible");
+           exit();
+
+        }
+    var valueline = d3.svg.line()
+        .x(function(d) { return x(d.Year); })
+        .y(function(d) { return y(d["Data Value"]); });
+        
+
+       svg.append("path")
+            .attr("class", "line")
+            .attr("id", state)
+            .attr("d", valueline(data))
+            .on("mouseover", function(d) {      
+                div2.transition()        
+                   .duration(200)      
+                   .style("opacity", .9);      
+                   div2.text(stateName)
+                   .style("left", (d3.event.pageX) + "px")     
+                   .style("top", (d3.event.pageY - 28) + "px");  
+            var stateshape = d3.select("#" + stateName);
+               stateshape.classed("mousedOn", true);  
+            }) 
+            // fade out tooltip on mouse out               
+            .on("mouseout", function(d) {       
+            div2.transition()        
+               .duration(500)      
+               .style("opacity", 0);  
+               // console.log(stateName);
+               var stateshape = d3.select("#" + stateName);
+               stateshape.classed("mousedOn", false);
+               stateshape.classed("selected", true);
+
+            });
+    }});
+}
+//var color = 
+
+function avgLine()
+{
+    var avg_sum = 0;
+    var count = 0;
+    var avgArr = [];
+    promiseData.then(function(data)
+        {
+        var checked = document.getElementById("avgbox").checked;
+        var indicator = document.getElementById("indicatorForm").value;
+        if (checked != true) {
+        removeLine("avg");
+        }
+        else 
+            {
+                data = data.filter(function(d){ return (d.Indicator == indicator);
+            });
+            data.sort(function(a, b){return (a.Year > b.Year);
+            });
+        data.forEach(function(d, i)
+        {
+            if(d.State != "US")
+            {
+                avg_sum += d["Data Value"];
+
+                count += 1;
+
+                if(i != 0 && (Date.parse(data[i-1].Year) != Date.parse(d.Year)))
+                {
+                    avg = avg_sum / count;
+                    count = 0;
+                    avg_sum = 0;
+                    avgArr.push({"Year": data[i-1].Year, "Data Value": avg});
+                    //console.log(avgArr[avgArr.length - 1]);
+                }
+            }
+        })
+    var valueline = d3.svg.line()
+    .x(function(d) { return x(d.Year); })
+    .y(function(d) { return y(d["Data Value"]); });
+    
+
+   svg.append("path")
+        .attr("class", "line")
+        .attr("id", "avg")
+        .attr("d", valueline(avgArr)) 
+        .style("stroke", "red")
+            .on("mouseover", function(d) {      
+            div2.transition()        
+               .duration(200)      
+               .style("opacity", .9);      
+               div2.text("Average")
+               .style("left", (d3.event.pageX) + "px")     
+               .style("top", (d3.event.pageY - 28) + "px");    
+        })   
+
+        // fade out tooltip on mouse out               
+        .on("mouseout", function(d) {       
+            div2.transition()        
+               .duration(500)      
+               .style("opacity", 0);   
+        });
+
+    }
+        });
+}
+
+
+
+function createGraph(indicator)
+{
+    promiseData.then(function(data)
+    {
+        console.log("in createGraph")
+        data = data.filter(function(d){ return (d.Indicator == indicator);})
+        .filter(function(d){
+            return ((+Date.parse(d.Year) >= +Date.parse(mainStartDate))&& (+Date.parse(d.Year) <= +Date.parse(mainEndDate)) );
+        });
+        //console.log("in createGraph");
+        console.log(data[0]);
+        var avg = 0;
+        var avg_sum = 0;
+        var count = 0;
+        var avgArr = [];
+        var min = 8007199254740992;
+        var max = 0;
+        data.forEach(function(d, i)
+        {
+            if(d.State != "US")
+            {
+                avg_sum += d["Data Value"];
+                if(d["Data Value"] > max)
+                {
+                    max = d["Data Value"];
+                    //console.log(data[i]);
+                }
+                if(d["Data Value"] < min)
+                {
+                    min = d["Data Value"];
+                    //console.log(data[i]};
+                }
+                count += 1;
+            }
+        });
+    // .filter(function(d){return (d.State == state);}
+    //         );
+
+/*data.sort(function(a,b) {
+  return b["Data Value"] - a["Data Value"];
+});*/
+    // Scale the range of the data
+    x.domain(d3.extent(data, function(d) { return d.Year; }));
+    // y.domain([d3.min(avgArr, function(d) { d3.min(data, return d["Data Value"]; })-100, d3.max(data, function(d) { return d["Data Value"]; })]);
+    y.domain([ ((min - 100 >= 0) ? min-100 : 0), max]);
+
+    // Add the X Axis
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("id", "xaxis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+
+        svg.append("text")      // text label for the x axis
+        .attr("x", width / 2 )
+        .attr("y",  height + margin.bottom/2)
+        .style("text-anchor", "middle")
+        .text("Month/Year");
+
+    // Add the Y Axis
+    svg.append("g")
+        .attr("class", "y axis")
+        .attr("id", "yaxis")
+        .call(yAxis);
+        
+    svg.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("y", 0 - margin.left)
+    .attr("x",0 - (height / 2))
+    .attr("dy", "1em")
+    .style("text-anchor", "middle")
+    .text("Number of Deaths");
+
+
+
+    });
+}
+// Set the dimensions of the canvas / graph
+
+function updateIndicator(indicatorValue)
+{
+    console.log("in updateIndicator");
+    mainIndicator = indicatorValue;
+   // d3.selectAll().remove();
+    var checked = false;
+
+    d3.select("#xaxis").remove();
+    d3.select("#yaxis").remove();
+    createGraph(indicatorValue);
+
+    stateList.forEach(function(d){
+        checked = document.getElementById(d+"box").checked;
+        if (checked == true) {
+         removeLine(d);
+         updateGraph(d);
+        }
+    });
+    var checked = document.getElementById("avgbox").checked;
+        if (checked == true) {
+        removeLine("avg");
+        avgLine();
+        }
+
+}
+
+// Parse the date / time
+var parseDate = d3.time.format("%Y,%B").parse;
+ var mainIndicator = "Number of Drug Overdose Deaths";
+ var mainStartDate = parseDate("2015".concat(",", "January"));
+ var mainEndDate = parseDate("2018".concat(",", "June"));
+// Set the ranges
+var x = d3.time.scale().range([0, width]);
+var y = d3.scale.linear().range([height, 0]);
+
+// Define the axes
+var xAxis = d3.svg.axis().scale(x)
+    .orient("bottom").ticks(8).tickFormat(d3.time.format("%b '%y"));
+
+var yAxis = d3.svg.axis().scale(y)
+    .orient("left").ticks(5);
+
+// Define the line
+
+
+// Adds the svg canvas
+
+var svg = d3.select("#OdChart")
+    .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .attr("float", "left")
+    .append("g")
+        .attr("transform", 
+              "translate(" + margin.left + "," + margin.top + ")");
+
+
+
+// Get the data
+var promiseData = new Promise( function(resolve, reject){d3.csv("data.csv", function(data) {
+    data.forEach(function(d) {
+    //d.Year = +d.Year;
+    d.Year = parseDate(d.Year.concat(",", d.Month));
+    d["Data Value"] = +d["Data Value"];
+  });
+     data = data.filter(function(d){
+        var isState = -1;
+        stateList.forEach(function(s)
+        {
+            if(d.State == s)
+            {isState = 1;}
+        });
+
+        return isState;
+     });
+     resolve(data);
+});
+});
+ function updateState(fullId)
+{
+    var index = -1;
+      stateNames.forEach(function(d,i)
+            {
+                if(d == fullId)
+                {
+                    index = i;
+                }
+            });
+        var state = stateList[index];
+        var checked = document.getElementById(state+"box").checked;
+        if (checked == true)
+        {
+            document.getElementById(state+"box").checked = false;
+        }
+        else{
+            document.getElementById(state+"box").checked = true;
+        }
+      updateGraph(stateList[index]);
+    }
+createGraph(mainIndicator);
+document.getElementById("avgbox").checked = true;
+avgLine();
+var widthMap = 600;
+var heightMap = 300;
+    var projection = d3.geo.albersUsa()
+                       .translate([widthMap/2, heightMap/2])    // translate to center of screen
+                       .scale([widthMap]);          // scale things down so see entire US
+    // Define path generator
+    var path = d3.geo.path()               // path generator that will convert GeoJSON to SVG paths
+                 .projection(projection);  // tell path generator to use albersUsa projection
+    
+    //Create SVG element and append map to the SVG
+    var mapSvg = d3.select("#usMap")
+                .select("svg")
+                .attr("width", widthMap)
+                .attr("height", heightMap);
+     var div = d3.select("#usMap")
+            .append("div")   
+            .attr("class", "tooltip")               
+            .style("opacity", 0);
+     var div2 = d3.select("#usMap")
+            .append("div")   
+            .attr("class", "tooltip")               
+            .style("opacity", 0);
+
+    
+    // mapSvg.append("rect")
+    //   .attr("class", "background")
+    //   .attr("width", widthMap)
+    //   .attr("height", heightMap)
+    //  .style("fill", "#FFF");
+
+
+    
+    d3.json("us-states.json", function(json) {
+      
+      // Bind the data to the SVG and create one path per GeoJSON feature
+      mapSvg.selectAll("path")
+          .data(json.features)
+          .enter()
+          .append("path")
+          .attr("d", path)
+          .attr("id", function(d) { 
+            return d.properties.name.replace(/\s+/g, '_'); })
+          .style("stroke", "steelblue")
+          .style("stroke-width", "1")
+          //.style("fill", "rgb(213,222,217)")
+          .classed("unselected", true)
+          .classed("selected", false)
+          .classed("mousedOn", false)
+          .on("click", function(){
+            updateState(this.id);})
+          .on("mouseover", function(d) {      
+        div.transition()        
+           .duration(200)      
+           .style("opacity", .9);          
+    })   
+
+    // fade out tooltip on mouse out               
+    .on("mouseout", function(d) {       
+        div.transition()        
+           .duration(500)      
+           .style("opacity", 0);   
+    });
+          ;
+         });
+
+
+
+</script>
+</body
