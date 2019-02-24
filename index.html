@@ -406,7 +406,7 @@ function avgLine()
             {
                 data = data.filter(function(d){ return (d.Indicator == indicator);
             });
-            data.sort(function(a, b){return (a.Year > b.Year);
+            data.sort(function(a, b){return (Date.parse(a.Year) > Date.parse(b.Year));
             });
         data.forEach(function(d, i)
         {
