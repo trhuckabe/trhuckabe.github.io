@@ -724,7 +724,7 @@ var svg = d3.select("#OdChart")
 
 
 // Get the data
-var promiseData = new Promise( function(resolve, reject){d3.csv("file:///C:/Users/Tori/Documents/CS_4431/data.csv", function(data) {
+var promiseData = new Promise( function(resolve, reject){d3.csv("data.csv", function(data) {
     data.forEach(function(d) {
     //d.Year = +d.Year;
     d["Data Value"] = +d["Data Value"];
