@@ -258,8 +258,10 @@ function updateTime()
 
     d3.select("#xaxis").remove();
     d3.select("#yaxis").remove();
-        mainStartDate = parseDate(yearStart.concat(",", monthStart));
-        mainEndDate = parseDate(yearEnd.concat(",", monthEnd));
+    mainStartYear = yearStart;
+    mainStartMonth = monthStart;
+    mainEndYear = yearEnd;
+    mainEndMonth = monthEnd;
         createGraph(mainIndicator);
 
     stateList.forEach(function(d){
@@ -357,7 +359,7 @@ function updateGraph(state){
 
         }
     var valueline = d3.svg.line()
-        .x(function(d) { return x(d.Year); })
+        .x(function(d) { return x(parseDate(d.Year.concat(",", d.Month))); })
         .y(function(d) { return y(d["Data Value"]); });
         
 
@@ -406,8 +408,38 @@ function avgLine()
             {
                 data = data.filter(function(d){ return (d.Indicator == indicator);
             });
-            data.sort(function(a, b){return ((a.Year) > (b.Year));
+            data.sort(function(a, b){
+                var indexA =0;
+                var indexB = 0;
+                yearList.forEach(function(d, i){
+                    if(d == a.Year)
+                    {
+                        indexA = i;
+                    }
+                    if(d == b.Year)
+                    {
+                        indexB = i;
+                    }
+                });
+                if(indexA != indexB)
+                {return (indexA > indexB);}
+            else
+            {
+                monthList.forEach(function(d, i){
+                    if(d == a.Month)
+                    {
+                        indexA = i;
+                    }
+                    if(d == b.Month)
+                    {
+                        indexB = i;
+                    }
+                }); 
+                return (indexA > indexB);
+            }
+
             });
+            console.log(data[2]);
         data.forEach(function(d, i)
         {
             if(d.State != "US")
@@ -416,18 +448,18 @@ function avgLine()
 
                 count += 1;
 
-                if(i != 0 && ((data[i-1].Year) != (d.Year)))
+                if(i != 0 && (data[i-1].Month != d.Month))
                 {
                     avg = avg_sum / count;
                     count = 0;
                     avg_sum = 0;
-                    avgArr.push({"Year": data[i-1].Year, "Data Value": avg});
-                    console.log(avgArr[avgArr.length - 1]);
+                    avgArr.push({"Year": data[i-1].Year, "Month": data[i-1].Month, "Data Value": avg});
+                    //console.log(avgArr[avgArr.length - 1]);
                 }
             }
         })
     var valueline = d3.svg.line()
-    .x(function(d) { return x(d.Year); })
+    .x(function(d) { return x(parseDate(d.Year.concat(",", d.Month))); })
     .y(function(d) { return y(d["Data Value"]); });
     
 
@@ -465,10 +497,9 @@ function createGraph(indicator)
         console.log("in createGraph")
         data = data.filter(function(d){ return (d.Indicator == indicator);})
         .filter(function(d){
-            return ((+Date.parse(d.Year) >= +Date.parse(mainStartDate))&& (+Date.parse(d.Year) <= +Date.parse(mainEndDate)) );
+            return ((parseInt(d.Year) >= parseInt(mainStartYear))&& (parseInt(d.Year) <= parseInt(mainEndYear)) );
         });
         //console.log("in createGraph");
-        console.log(data[0]);
         var avg = 0;
         var avg_sum = 0;
         var count = 0;
@@ -500,7 +531,7 @@ function createGraph(indicator)
   return b["Data Value"] - a["Data Value"];
 });*/
     // Scale the range of the data
-    x.domain(d3.extent(data, function(d) { return d.Year; }));
+    x.domain(d3.extent(data, function(d) { return parseDate(d.Year.concat(",", d.Month)); }));
     // y.domain([d3.min(avgArr, function(d) { d3.min(data, return d["Data Value"]; })-100, d3.max(data, function(d) { return d["Data Value"]; })]);
     y.domain([ ((min - 100 >= 0) ? min-100 : 0), max]);
 
@@ -566,8 +597,10 @@ function updateIndicator(indicatorValue)
 // Parse the date / time
 var parseDate = d3.time.format("%Y,%B").parse;
  var mainIndicator = "Number of Drug Overdose Deaths";
- var mainStartDate = parseDate("2015".concat(",", "January"));
- var mainEndDate = parseDate("2018".concat(",", "June"));
+ var mainStartYear ="2015";
+ var mainStartMonth ="January";
+  var mainEndYear ="2018";
+ var mainEndMonth ="June";
 // Set the ranges
 var x = d3.time.scale().range([0, width]);
 var y = d3.scale.linear().range([height, 0]);
@@ -599,9 +632,9 @@ var svg = d3.select("#OdChart")
 var promiseData = new Promise( function(resolve, reject){d3.csv("data.csv", function(data) {
     data.forEach(function(d) {
     //d.Year = +d.Year;
-    d.Year = parseDate(d.Year.concat(",", d.Month));
     d["Data Value"] = +d["Data Value"];
   });
+    data.for
      data = data.filter(function(d){
         var isState = -1;
         stateList.forEach(function(s)
