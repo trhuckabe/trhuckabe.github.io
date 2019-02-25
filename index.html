@@ -91,7 +91,14 @@ div.tooltip {
     border-color: #FFF;
 
   }
+
 </style> 
+  <!--  <select id="ddlViewBy">
+  <option value="VA">VA</option>
+  <option value="TX" >TX</option>
+  <option value="WI">WI</option>
+  <input type="button" name="Submit" onclick="updateGraph()" value="Submit">
+</select>-->
 <head>
  <meta charset="UTF-8">
  <title>US Overdose Statistics</title>
@@ -343,6 +350,10 @@ function updateGraph(state){
        // document.getElementById(stateNames).classed("unselected",false);
 
           data = data.filter(function(d){ return (d.Indicator == indicator);})
+ .filter(function(d){
+            return (findTimeInterval(d) );
+        })
+        
            
         .filter(function(d){return (d.State == state);}
                 );
@@ -406,7 +417,73 @@ function updateGraph(state){
     }});
 }
 //var color = 
+function findTimeInterval(element)
+{
+    var start = 0;
+    var end = 0;
+    var num = 0;
+    var start2 = 0;
+    var end2 = 0;
+    var num2 = 0;
 
+    yearList.forEach(
+        function(d, i)
+        {
+            if(mainStartYear == d)
+            {
+                start = i;
+            }
+            if(mainEndYear == d)
+            {
+                end = i;
+            }
+             if(element.Year == d)
+            {
+                num = i;
+            }
+        });
+        if((num < end) && (num > start))
+        {
+            return (true);
+        }
+        if((num > end) && (num < start))
+        {
+            return (false);
+        }
+        monthList.forEach(
+        function(d, i)
+        {
+            if(mainStartMonth == d)
+            {
+                start2 = i;
+            }
+            if(mainEndMonth == d)
+            {
+                end2 = i;
+            }
+             if(element.Month == d)
+            {
+                num2 = i;
+            }
+        } );
+        if(num == end)
+        {
+            if(num2 <= end2)
+            {
+                return(true);
+            }
+            return (false);
+        }
+        if(num == start)
+        {
+            if(num2 >= start2)
+            {
+                return(true);
+            }
+            return (false);
+        }
+       
+}
 function avgLine()
 {
     var avg_sum = 0;
@@ -422,7 +499,10 @@ function avgLine()
         else 
             {
                 data = data.filter(function(d){ return (d.Indicator == indicator);
-            });
+            })
+                        .filter(function(d){
+            return (findTimeInterval(d) );
+        });
             data.sort(function(a, b){
                 var indexA =0;
                 var indexB = 0;
@@ -469,7 +549,7 @@ function avgLine()
                     count = 0;
                     avg_sum = 0;
                     avgArr.push({"Year": data[i-1].Year, "Month": data[i-1].Month, "Data Value": avg});
-                    console.log(avgArr[avgArr.length - 1]);
+                    //console.log(avgArr[avgArr.length - 1]);
                 }
             }
         })
@@ -511,8 +591,8 @@ function createGraph(indicator)
     {
         console.log("in createGraph")
         data = data.filter(function(d){ return (d.Indicator == indicator);})
-        .filter(function(d){
-            return ((parseInt(d.Year) >= parseInt(mainStartYear))&& (parseInt(d.Year) <= parseInt(mainEndYear)) );
+         .filter(function(d){
+            return (findTimeInterval(d) );
         });
         //console.log("in createGraph");
         var avg = 0;
@@ -644,7 +724,7 @@ var svg = d3.select("#OdChart")
 
 
 // Get the data
-var promiseData = new Promise( function(resolve, reject){d3.csv("data.csv", function(data) {
+var promiseData = new Promise( function(resolve, reject){d3.csv("file:///C:/Users/Tori/Documents/CS_4431/data.csv", function(data) {
     data.forEach(function(d) {
     //d.Year = +d.Year;
     d["Data Value"] = +d["Data Value"];
