@@ -422,7 +422,7 @@ function avgLine()
                     }
                 });
                 if(indexA != indexB)
-                {return (indexA > indexB);}
+                {return return (indexA > indexB ? 1 : -1);}
             else
             {
                 monthList.forEach(function(d, i){
@@ -435,7 +435,7 @@ function avgLine()
                         indexB = i;
                     }
                 }); 
-                return (indexA > indexB);
+                return return (indexA > indexB ? 1 : -1);
             }
 
             });
