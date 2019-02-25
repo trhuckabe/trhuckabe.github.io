@@ -82,14 +82,26 @@ div.tooltip {
     overflow-y: scroll;
     overflow-x: scroll;
   }
+    #dataSource
+    {
+    height: 550px;
+    width: 55%;
+    float: left;
+    border-style: solid;
+    border-color: #FFF;
 
+  }
 </style> 
-  <!--  <select id="ddlViewBy">
-  <option value="VA">VA</option>
-  <option value="TX" >TX</option>
-  <option value="WI">WI</option>
-  <input type="button" name="Submit" onclick="updateGraph()" value="Submit">
-</select>-->
+<head>
+ <meta charset="UTF-8">
+ <title>US Overdose Statistics</title>
+ <meta name="robots" content="index,follow" />
+ <link rel="stylesheet" href="css/style.css">
+
+</head>
+<div>
+<h1>US Overdose Statistics</h1>
+</div>
 <div id=graphHolder>
     <div id="OdChart">
     </div>
@@ -114,6 +126,9 @@ div.tooltip {
      </div>
 <div id="usMap">
   <svg></svg>
+</div>
+<div id="dataSource">
+<p>https://www.cdc.gov/nchs/nvss/vsrr/drug-overdose-data.htm#</p>
 </div>
 <!-- load the d3.js library -->    
 <script src="https://d3js.org/d3.v3.min.js"></script>
