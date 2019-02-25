@@ -406,7 +406,7 @@ function avgLine()
             {
                 data = data.filter(function(d){ return (d.Indicator == indicator);
             });
-            data.sort(function(a, b){return (Date.parse(a.Year) > Date.parse(b.Year));
+            data.sort(function(a, b){return ((a.Year) > (b.Year));
             });
         data.forEach(function(d, i)
         {
@@ -416,7 +416,7 @@ function avgLine()
 
                 count += 1;
 
-                if(i != 0 && (+Date.parse(data[i-1].Year) != +Date.parse(d.Year)))
+                if(i != 0 && ((data[i-1].Year) != (d.Year)))
                 {
                     avg = avg_sum / count;
                     count = 0;
