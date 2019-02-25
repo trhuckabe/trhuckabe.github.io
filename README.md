@@ -10,7 +10,7 @@ or drug class.
 I created an average function that would find the average number of deaths from all of the states given a certain indicator.
 I made this line red to distiguish from the rest as see in the screen shot below
 
-(/screenshots/img1.png)
+(/screenshots/img1.PNG)
 
 I made it where you could select from either the map or the checkboxes. This would make the corresponding state red.
 I updated whichever profile waas not the one being used when the other one was (i.e. made the check appear if you selected
