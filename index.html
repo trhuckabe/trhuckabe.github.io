@@ -115,7 +115,7 @@ div.tooltip {
     <form id="stateCheckBox">
         <input type="checkbox" id="avgbox" onclick="avgLine()"><label> avg</label>
     </form>
-    <select id="indicatorForm">
+    <select id="indicatorForm" onclick="updateIndicator(this.value)">
     </select>
 </div>
 <div id="startTime">
@@ -207,7 +207,7 @@ const width = 600, height = 400,
   
     indicatorsLabel.forEach( function(d,i){
     document.getElementById('indicatorForm').innerHTML +=
-     ('<option value="' +indicatorValue[i]+ '" onclick="updateIndicator(this.value)">'+ d + '</option>');
+     ('<option value="' +indicatorValue[i]+ '">'+ d + '</option>');
 
    } );
 
